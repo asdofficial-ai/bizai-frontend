@@ -1,168 +1,44 @@
 import React, { useEffect, useRef, useState } from "react";
 
-const API_BASE = (import.meta.env.VITE_API_URL || "").replace(/\/$/, "");
-const GENERAL_AI_NAME = "Bizora";
-const CHAT_STORAGE_KEY = "bizai_chat_history";
+const API_BASE=(import.meta.env.VITE_API_URL||"").replace(/\/$/,"");
+const CHAT_KEY="bizai_chat_history";
+const C={bg:"#061126",panel:"#0c1b38",panel2:"#10264d",blue:"#4f8cff",cyan:"#51d7ff",text:"#f5f8ff",muted:"#91a4c7",line:"rgba(255,255,255,.09)",danger:"#ff6f7d",green:"#55e6a5"};
+const shadow="0 18px 45px rgba(0,0,0,.28)";
+async function request(path,body){const r=await fetch(`${API_BASE}${path}`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});let d;try{d=await r.json()}catch{throw new Error("The server returned an invalid response.")}if(!r.ok)throw new Error(d?.error||"Something went wrong. Please try again.");return d}
+async function generate(payload){const d=await request("/api/generate",payload);if(!d?.text)throw new Error("No text came back from the AI.");return d.text}
+async function generateWebsite(payload){const d=await request("/api/generate-website",payload);if(!d?.html)throw new Error("No website came back from the AI.");return d.html}
+async function chat(messages){const d=await request("/api/chat",{messages});if(!d?.text)throw new Error("No reply came back from Bizora.");return d.text}
 
-async function request(path, body) {
-  const res = await fetch(`${API_BASE}${path}`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
-  });
-  let data;
-  try { data = await res.json(); } catch { throw new Error("The server returned an invalid response."); }
-  if (!res.ok) throw new Error(data?.error || "Something went wrong. Please try again.");
-  return data;
-}
-
-async function generateFromBackend(payload) {
-  const data = await request("/api/generate", payload);
-  if (!data?.text) throw new Error("No text came back from the AI.");
-  return data.text;
-}
-async function generateWebsite(brief) {
-  const data = await request("/api/generate-website", brief);
-  if (!data?.html) throw new Error("No website came back from the AI.");
-  return data.html;
-}
-async function sendChatMessage(messages) {
-  const data = await request("/api/chat", { messages });
-  if (!data?.text) throw new Error("No reply came back from Bizora.");
-  return data.text;
-}
-
-const palette = { paper: "#F6EFDD", ink: "#1C1A17", gold: "#E8A33D", brick: "#B23A2E", palm: "#2E6350", indigo: "#232C4B" };
-
-function Card({ children, bg = palette.paper, color = palette.ink, style = {} }) {
-  return <div style={{ background: bg, color, border: `3px solid ${palette.ink}`, ...style }}>{children}</div>;
-}
-function Button({ children, onClick, disabled, full, bg = palette.gold, color = palette.ink }) {
-  return <button onClick={onClick} disabled={disabled} style={{ background: bg, color, border: `3px solid ${palette.ink}`, padding: "12px 16px", fontFamily: "'Work Sans',sans-serif", fontWeight: 700, fontSize: 14, cursor: disabled ? "not-allowed" : "pointer", opacity: disabled ? .5 : 1, width: full ? "100%" : "auto" }}>{children}</button>;
-}
-function Header({ title, onBack }) {
-  return <div style={{ background: palette.indigo, color: palette.paper, padding: "16px 18px", display: "flex", alignItems: "center", gap: 12, borderBottom: `3px solid ${palette.ink}`, position: "sticky", top: 0, zIndex: 10 }}>
-    <button onClick={onBack} aria-label="Back" style={{ background: "none", border: 0, color: palette.paper, fontSize: 22, cursor: "pointer" }}>←</button>
-    <b style={{ fontFamily: "'Archivo Black',sans-serif" }}>{title}</b>
-  </div>;
-}
-function Loading({ label = "Thinking..." }) { return <div style={{ padding: 12, fontWeight: 700 }}>{label}</div>; }
-function Field({ label, value, onChange, placeholder }) {
-  return <label style={{ display: "block" }}><div style={{ fontWeight: 700, fontSize: 13, marginBottom: 6 }}>{label}</div><input value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder} style={{ width: "100%", boxSizing: "border-box", padding: 12, border: `3px solid ${palette.ink}`, background: palette.paper, fontSize: 15 }} /></label>;
-}
-
-const TOOLS = [
-  ["ad", "✍️", "Create Advertisement", palette.gold, palette.ink],
-  ["whatsapp", "📱", "WhatsApp Marketing", palette.palm, palette.paper],
-  ["flyer", "🎨", "Create Flyer", palette.brick, palette.paper],
-  ["reply", "💬", "Reply to Customer", palette.indigo, palette.paper],
-  ["website", "🌐", "Create Website", palette.gold, palette.ink],
-  ["ai", "✨", GENERAL_AI_NAME, palette.ink, palette.paper],
+const baseInput={width:"100%",boxSizing:"border-box",padding:"14px 15px",border:`1px solid ${C.line}`,borderRadius:15,background:"rgba(255,255,255,.055)",color:C.text,fontSize:15,outline:"none"};
+function Card({children,style={}}){return <div style={{background:"linear-gradient(145deg,rgba(20,45,88,.92),rgba(9,25,53,.94))",border:`1px solid ${C.line}`,borderRadius:22,boxShadow:shadow,...style}}>{children}</div>}
+function Button({children,onClick,disabled,full,secondary=false}){return <button onClick={onClick} disabled={disabled} style={{border:secondary?`1px solid ${C.line}`:"none",borderRadius:14,padding:"12px 16px",background:secondary?"rgba(255,255,255,.055)":"linear-gradient(135deg,#3f7cff,#6a65ff)",color:C.text,fontWeight:750,fontSize:14,cursor:disabled?"not-allowed":"pointer",opacity:disabled?.5:1,width:full?"100%":"auto",boxShadow:secondary?"none":"0 9px 24px rgba(63,124,255,.24)"}}>{children}</button>}
+function Field({label,value,onChange,placeholder}){return <label style={{display:"block"}}><div style={{fontSize:12,fontWeight:700,color:C.muted,marginBottom:7}}>{label}</div><input value={value} onChange={e=>onChange(e.target.value)} placeholder={placeholder} style={baseInput}/></label>}
+function Header({title,onBack}){return <div style={{position:"sticky",top:0,zIndex:10,display:"flex",alignItems:"center",gap:12,padding:"15px 18px",background:"rgba(6,17,38,.92)",backdropFilter:"blur(18px)",borderBottom:`1px solid ${C.line}`}}><button onClick={onBack} style={{width:38,height:38,borderRadius:12,border:`1px solid ${C.line}`,background:"rgba(255,255,255,.05)",color:C.text,fontSize:19}}>←</button><div><div style={{fontWeight:800,fontSize:17}}>{title}</div><div style={{fontSize:11,color:C.muted}}>BizAI workspace</div></div></div>}
+function Loading({label="BizAI is thinking..."}){return <div style={{display:"flex",gap:10,alignItems:"center",color:C.muted,fontSize:13,padding:8}}><span style={{width:9,height:9,borderRadius:"50%",background:C.cyan,boxShadow:`0 0 15px ${C.cyan}`}}/> {label}</div>}
+const tools=[
+ ["ad","✦","Create Ad","Turn products into persuasive ads","#635bff"],
+ ["whatsapp","◉","WhatsApp","Create messages that sell","#20b985"],
+ ["flyer","◇","Flyer Studio","Make a quick product flyer","#e46f9d"],
+ ["reply","↗","Smart Reply","Answer customers faster","#4f8cff"],
+ ["website","⌘","Website AI","Generate a business website","#8b6cff"],
+ ["ai","✧","Bizora AI","Your general AI assistant","#28b7df"]
 ];
-
-function Home({ profile, onProfile, onTool }) {
-  return <div style={{ padding: 18, display: "flex", flexDirection: "column", gap: 16 }}>
-    <div><div style={{ fontFamily: "'Archivo Black',sans-serif", fontSize: 28 }}>BizAI</div><div style={{ color: "#5b564c", marginTop: 4 }}>Run your business like you hired a marketer.</div></div>
-    <Card bg={palette.ink} color={palette.paper} style={{ padding: 14, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-      <div><small style={{ opacity: .7 }}>Your shop</small><div style={{ fontFamily: "'Archivo Black',sans-serif", marginTop: 3 }}>{profile.business || "Set up your business"}</div></div>
-      <Button onClick={onProfile}>{profile.business ? "Edit" : "Set up"}</Button>
-    </Card>
-    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-      {TOOLS.map(([id, emoji, label, bg, color]) => <Card key={id} bg={bg} color={color} style={{ minHeight: 100, cursor: "pointer" }}><div onClick={() => onTool(id)} style={{ padding: 16, height: "100%", boxSizing: "border-box" }}><div style={{ fontSize: 27 }}>{emoji}</div><div style={{ fontWeight: 800, marginTop: 12 }}>{label}</div></div></Card>)}
-    </div>
-    <div style={{ textAlign: "center", fontSize: 12, color: "#8a8477" }}>BizAI · Business tools powered by AI</div>
-  </div>;
-}
-
-function ProfileScreen({ profile, setProfile, done }) {
-  const [p, setP] = useState(profile);
-  return <div style={{ padding: 18, display: "flex", flexDirection: "column", gap: 14 }}>
-    <Field label="Business name" value={p.business} onChange={v => setP({ ...p, business: v })} placeholder="e.g. Kano Kicks" />
-    <Field label="What you sell" value={p.product} onChange={v => setP({ ...p, product: v })} placeholder="e.g. Sneakers" />
-    <Field label="Price" value={p.price} onChange={v => setP({ ...p, price: v })} placeholder="e.g. ₦35,000" />
-    <Field label="Location" value={p.location} onChange={v => setP({ ...p, location: v })} placeholder="e.g. Kaduna" />
-    <Button full bg={palette.ink} color={palette.paper} onClick={() => { setProfile(p); done(); }}>Save business profile</Button>
-  </div>;
-}
-
-function TextTool({ profile, mode }) {
-  const [tone, setTone] = useState("Friendly"), [result, setResult] = useState(""), [error, setError] = useState(""), [loading, setLoading] = useState(false);
-  const run = async () => {
-    if (!profile.business) return;
-    setLoading(true); setError("");
-    try { setResult(await generateFromBackend({ businessName: profile.business, product: profile.product, price: profile.price, location: profile.location, task: mode, tone })); } catch (e) { setError(e.message); } finally { setLoading(false); }
-  };
-  return <div style={{ padding: 18, display: "flex", flexDirection: "column", gap: 14 }}>
-    {!profile.business ? <Card bg={palette.brick} color={palette.paper} style={{ padding: 14 }}>Set up your business profile first.</Card> : <>
-      <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>{["Friendly", "Professional", "Short", "Persuasive"].map(t => <Button key={t} onClick={() => setTone(t)} bg={tone === t ? palette.ink : palette.paper} color={tone === t ? palette.paper : palette.ink}>{t}</Button>)}</div>
-      <Button full onClick={run} disabled={loading}>{loading ? "Generating..." : mode === "ad" ? "Generate advertisement" : "Generate WhatsApp message"}</Button>
-      {loading && <Loading />}{error && <Card bg={palette.brick} color={palette.paper} style={{ padding: 14 }}>{error}</Card>}
-      {result && <><Card style={{ padding: 16, whiteSpace: "pre-wrap", lineHeight: 1.5 }}>{result}</Card><Button onClick={() => navigator.clipboard?.writeText(result)}>Copy</Button></>}
-    </>}
-  </div>;
-}
-
-function ReplyScreen({ profile }) {
-  const [message, setMessage] = useState(""), [tone, setTone] = useState("Friendly"), [result, setResult] = useState(""), [error, setError] = useState(""), [loading, setLoading] = useState(false);
-  const run = async () => { if (!message.trim()) return; setLoading(true); setError(""); try { setResult(await generateFromBackend({ businessName: profile.business, product: profile.product, price: profile.price, location: profile.location, task: "reply", customerMessage: message, tone })); } catch (e) { setError(e.message); } finally { setLoading(false); } };
-  return <div style={{ padding: 18, display: "flex", flexDirection: "column", gap: 14 }}>
-    <label><b>What did the customer say?</b><textarea value={message} onChange={e => setMessage(e.target.value)} rows={4} placeholder="Paste the customer's message" style={{ width: "100%", boxSizing: "border-box", marginTop: 6, padding: 12, border: `3px solid ${palette.ink}`, background: palette.paper }} /></label>
-    <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>{["Friendly", "Professional", "Short", "Persuasive"].map(t => <Button key={t} onClick={() => setTone(t)} bg={tone === t ? palette.ink : palette.paper} color={tone === t ? palette.paper : palette.ink}>{t}</Button>)}</div>
-    <Button full onClick={run} disabled={loading || !message.trim()}>{loading ? "Thinking..." : "AI Reply"}</Button>
-    {error && <Card bg={palette.brick} color={palette.paper} style={{ padding: 14 }}>{error}</Card>}{result && <><Card style={{ padding: 16, whiteSpace: "pre-wrap" }}>{result}</Card><Button onClick={() => navigator.clipboard?.writeText(result)}>Copy reply</Button></>}
-  </div>;
-}
-
-function FlyerScreen({ profile }) {
-  const canvasRef = useRef(null), [image, setImage] = useState(null);
-  useEffect(() => {
-    const canvas = canvasRef.current; if (!canvas) return; const ctx = canvas.getContext("2d"); canvas.width = 400; canvas.height = 500;
-    const finish = () => { ctx.fillStyle = palette.ink; ctx.fillRect(0, 370, 400, 130); ctx.fillStyle = palette.gold; ctx.fillRect(0, 370, 400, 6); ctx.fillStyle = palette.paper; ctx.font = "700 22px sans-serif"; ctx.fillText(profile.business || "Your Business", 16, 410); ctx.font = "600 15px sans-serif"; ctx.fillText(profile.product || "Your product", 16, 438); ctx.fillStyle = palette.gold; ctx.font = "700 20px sans-serif"; ctx.fillText(profile.price || "", 16, 468); ctx.fillStyle = palette.paper; ctx.font = "13px sans-serif"; ctx.fillText(profile.location ? `📍 ${profile.location}` : "", 16, 490); };
-    ctx.fillStyle = "#F2E9D2"; ctx.fillRect(0, 0, 400, 370);
-    if (!image) { ctx.fillStyle = "#777"; ctx.font = "15px sans-serif"; ctx.fillText("Upload a product photo", 120, 185); finish(); return; }
-    const img = new Image(); img.onload = () => { const s = Math.max(400 / img.width, 370 / img.height); const w = img.width * s, h = img.height * s; ctx.drawImage(img, (400-w)/2, (370-h)/2, w, h); finish(); }; img.src = image;
-  }, [image, profile]);
-  const pick = e => { const f = e.target.files?.[0]; if (!f) return; const r = new FileReader(); r.onload = () => setImage(r.result); r.readAsDataURL(f); };
-  const download = () => { const a = document.createElement("a"); a.download = `${(profile.business || "bizai-flyer").replace(/\s+/g, "_")}.png`; a.href = canvasRef.current.toDataURL("image/png"); a.click(); };
-  return <div style={{ padding: 18, display: "flex", flexDirection: "column", gap: 14 }}><b>Product photo</b><input type="file" accept="image/*" onChange={pick} /><canvas ref={canvasRef} style={{ width: "100%", border: `3px solid ${palette.ink}` }} /><Button full onClick={download}>Download flyer</Button></div>;
-}
-
-function WebsiteScreen({ profile }) {
-  const [form, setForm] = useState({ description: "", businessName: profile.business || "", businessType: "", services: profile.product || "", location: profile.location || "", contact: "", style: "", colors: "", requirements: "" });
-  const [html, setHtml] = useState(""), [error, setError] = useState(""), [loading, setLoading] = useState(false);
-  const field = (key, label, placeholder) => <Field label={label} value={form[key]} onChange={v => setForm({ ...form, [key]: v })} placeholder={placeholder} />;
-  const run = async () => { if (!form.description.trim() && !form.businessName.trim()) { setError("Add a business name or description first."); return; } setLoading(true); setError(""); try { setHtml(await generateWebsite(form)); } catch (e) { setError(e.message); } finally { setLoading(false); } };
-  const download = () => { const url = URL.createObjectURL(new Blob([html], { type: "text/html" })); const a = document.createElement("a"); a.href = url; a.download = `${(form.businessName || "website").replace(/\s+/g, "_")}.html`; a.click(); setTimeout(() => URL.revokeObjectURL(url), 1000); };
-  return <div style={{ padding: 18, display: "flex", flexDirection: "column", gap: 12 }}>
-    <label><b>Describe the website</b><textarea value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} rows={3} style={{ width: "100%", boxSizing: "border-box", marginTop: 6, padding: 12, border: `3px solid ${palette.ink}`, background: palette.paper }} /></label>
-    {field("businessName", "Business name", "e.g. King's Cut")}{field("businessType", "Business type", "e.g. Barber shop")}{field("services", "Services/products", "What do you offer?")}{field("location", "Location", "e.g. Kaduna")}{field("contact", "Contact info", "WhatsApp or phone")}{field("style", "Preferred style", "Modern, bold, minimal")}{field("colors", "Preferred colors", "Black, gold")}{field("requirements", "Other requirements", "Booking button, gallery...")}
-    <Button full onClick={run} disabled={loading}>{loading ? "Building..." : "Generate website"}</Button>{error && <Card bg={palette.brick} color={palette.paper} style={{ padding: 14 }}>{error}</Card>}
-    {html && <><b>Preview</b><iframe title="Website preview" srcDoc={html} sandbox="allow-scripts" style={{ width: "100%", height: 420, border: `3px solid ${palette.ink}`, background: "white" }} /><div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}><Button onClick={download}>Download HTML</Button><Button bg={palette.paper} onClick={() => navigator.clipboard?.writeText(html)}>Copy code</Button><Button bg={palette.paper} onClick={run}>Regenerate</Button></div></>}
-  </div>;
-}
-
-function AIChatScreen() {
-  const [messages, setMessages] = useState(() => { try { return JSON.parse(localStorage.getItem(CHAT_STORAGE_KEY) || "[]"); } catch { return []; } });
-  const [input, setInput] = useState(""), [loading, setLoading] = useState(false), [error, setError] = useState(""); const scrollRef = useRef(null);
-  useEffect(() => { try { localStorage.setItem(CHAT_STORAGE_KEY, JSON.stringify(messages)); } catch {} if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight; }, [messages]);
-  const send = async () => { const text = input.trim(); if (!text || loading) return; const next = [...messages, { role: "user", content: text }]; setMessages(next); setInput(""); setLoading(true); setError(""); try { const reply = await sendChatMessage(next); setMessages([...next, { role: "assistant", content: reply }]); } catch (e) { setError(e.message); } finally { setLoading(false); } };
-  const file = e => { const f = e.target.files?.[0]; if (!f) return; if (!/\.(txt|md|csv|json|js|jsx|ts|tsx|py|html|css)$/i.test(f.name)) { setError("For now, Bizora accepts text and common code files here."); return; } const r = new FileReader(); r.onload = () => setInput(v => `${v}${v ? "\n\n" : ""}[Contents of ${f.name}]\n${r.result}`); r.readAsText(f); };
-  return <div style={{ height: "calc(100vh - 58px)", display: "flex", flexDirection: "column" }}>
-    <div style={{ padding: 10, textAlign: "right" }}><Button bg={palette.paper} onClick={() => { setMessages([]); localStorage.removeItem(CHAT_STORAGE_KEY); }}>New conversation</Button></div>
-    <div ref={scrollRef} style={{ flex: 1, overflowY: "auto", padding: "0 18px", display: "flex", flexDirection: "column", gap: 10 }}>{messages.length === 0 && <Card style={{ padding: 14 }}>Ask Bizora anything — business, writing, ideas, coding, or research.</Card>}{messages.map((m, i) => <Card key={i} bg={m.role === "user" ? palette.indigo : palette.paper} color={m.role === "user" ? palette.paper : palette.ink} style={{ padding: 12, whiteSpace: "pre-wrap", maxWidth: "85%", alignSelf: m.role === "user" ? "flex-end" : "flex-start" }}>{m.content}</Card>)}{loading && <Loading />}{error && <Card bg={palette.brick} color={palette.paper} style={{ padding: 12 }}>{error}</Card>}</div>
-    <div style={{ padding: 14, borderTop: `3px solid ${palette.ink}` }}><div style={{ display: "flex", gap: 8 }}><textarea value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } }} rows={2} placeholder="Message Bizora..." style={{ flex: 1, padding: 10, border: `3px solid ${palette.ink}`, background: palette.paper }} /><Button onClick={send} disabled={loading || !input.trim()}>Send</Button></div><label style={{ display: "inline-block", marginTop: 8, fontSize: 12, cursor: "pointer" }}>📎 Attach text/code file<input type="file" onChange={file} style={{ display: "none" }} /></label></div>
-  </div>;
-}
-
-export default function App() {
-  const [screen, setScreen] = useState("home");
-  const [profile, setProfile] = useState(() => { try { return JSON.parse(localStorage.getItem("bizai_profile")) || { business: "", product: "", price: "", location: "" }; } catch { return { business: "", product: "", price: "", location: "" }; } });
-  useEffect(() => { try { localStorage.setItem("bizai_profile", JSON.stringify(profile)); } catch {} }, [profile]);
-  const titles = { profile: "Business profile", ad: "Create Advertisement", whatsapp: "WhatsApp Marketing", flyer: "Create Flyer", reply: "Reply to Customer", website: "Create Website", ai: GENERAL_AI_NAME };
-  return <div style={{ minHeight: "100vh", background: palette.paper, fontFamily: "'Work Sans',sans-serif", color: palette.ink, display: "flex", justifyContent: "center" }}><div style={{ width: "100%", maxWidth: 430, minHeight: "100vh", background: palette.paper }}>
-    {screen !== "home" && <Header title={titles[screen]} onBack={() => setScreen("home")} />}
-    {screen === "home" && <Home profile={profile} onProfile={() => setScreen("profile")} onTool={setScreen} />}
-    {screen === "profile" && <ProfileScreen profile={profile} setProfile={setProfile} done={() => setScreen("home")} />}
-    {screen === "ad" && <TextTool profile={profile} mode="ad" />}{screen === "whatsapp" && <TextTool profile={profile} mode="whatsapp" />}{screen === "reply" && <ReplyScreen profile={profile} />}{screen === "flyer" && <FlyerScreen profile={profile} />}{screen === "website" && <WebsiteScreen profile={profile} />}{screen === "ai" && <AIChatScreen />}
-  </div></div>;
-}
+function Home({profile,onProfile,onTool}){return <div style={{padding:"22px 18px 110px"}}>
+ <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:25}}><div><div style={{fontSize:12,color:C.cyan,fontWeight:800,letterSpacing:1.2}}>BIZAI</div><div style={{fontSize:26,fontWeight:850,marginTop:4}}>Hey{profile.business?`, ${profile.business}`:" there"} 👋</div><div style={{color:C.muted,fontSize:13,marginTop:5}}>What do you want to grow today?</div></div><button onClick={onProfile} style={{width:45,height:45,borderRadius:"50%",border:`1px solid ${C.line}`,background:"linear-gradient(145deg,#456ed9,#773fd2)",color:"white",fontWeight:900}}>{profile.business?profile.business[0].toUpperCase():"B"}</button></div>
+ <Card style={{padding:20,marginBottom:23,overflow:"hidden",position:"relative"}}><div style={{position:"absolute",width:160,height:160,borderRadius:"50%",background:"rgba(79,140,255,.2)",filter:"blur(25px)",right:-60,top:-60}}/><div style={{fontSize:11,color:C.cyan,fontWeight:800}}>YOUR BUSINESS</div><div style={{fontSize:20,fontWeight:850,marginTop:7}}>{profile.business||"Set up your business profile"}</div><div style={{fontSize:13,color:C.muted,marginTop:7,maxWidth:270}}>{profile.business?`${profile.product||"Business"}${profile.location?` · ${profile.location}`:""}`:"Give BizAI your business details for smarter results."}</div><div style={{marginTop:16}}><Button onClick={onProfile}>{profile.business?"Edit profile":"Set up now"}</Button></div></Card>
+ <div style={{display:"flex",justifyContent:"space-between",alignItems:"end",marginBottom:12}}><div><div style={{fontWeight:850,fontSize:18}}>Quick tools</div><div style={{fontSize:12,color:C.muted,marginTop:3}}>Everything you need in one place</div></div><span style={{fontSize:11,color:C.cyan}}>6 tools</span></div>
+ <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>{tools.map(([id,icon,name,desc,color])=><button key={id} onClick={()=>onTool(id)} style={{textAlign:"left",minHeight:145,padding:15,borderRadius:20,border:`1px solid ${C.line}`,background:"linear-gradient(150deg,rgba(18,42,82,.96),rgba(8,24,52,.96))",color:C.text,boxShadow:"0 10px 30px rgba(0,0,0,.18)"}}><div style={{width:40,height:40,borderRadius:13,display:"grid",placeItems:"center",fontSize:21,background:`${color}26`,color,boxShadow:`inset 0 0 0 1px ${color}45`}}>{icon}</div><div style={{fontWeight:800,fontSize:14,marginTop:14}}>{name}</div><div style={{fontSize:11,color:C.muted,lineHeight:1.4,marginTop:5}}>{desc}</div></button>)}</div>
+ <BottomNav onTool={onTool}/></div>}
+function BottomNav({onTool}){return <div style={{position:"fixed",bottom:12,left:"50%",transform:"translateX(-50%)",width:"calc(100% - 28px)",maxWidth:402,zIndex:20,padding:"9px 12px",boxSizing:"border-box",display:"flex",justifyContent:"space-around",background:"rgba(9,24,51,.92)",backdropFilter:"blur(20px)",border:`1px solid ${C.line}`,borderRadius:22,boxShadow:shadow}}>{[["home","⌂","Home"],["ad","✦","Create"],["ai","✧","Bizora"],["website","⌘","Website"]].map(([id,i,l])=><button key={id} onClick={()=>id!=="home"&&onTool(id)} style={{background:"none",border:0,color:id==="home"?C.cyan:C.muted,fontSize:10,fontWeight:700}}><div style={{fontSize:20,marginBottom:2}}>{i}</div>{l}</button>)}</div>}
+function Profile({profile,setProfile,done}){const[p,setP]=useState(profile);return <Page><Intro title="Business profile" text="BizAI uses this information to personalize what it creates for you."/><Field label="BUSINESS NAME" value={p.business} onChange={v=>setP({...p,business:v})} placeholder="e.g. Kano Kicks"/><Field label="WHAT YOU SELL" value={p.product} onChange={v=>setP({...p,product:v})} placeholder="e.g. Sneakers"/><Field label="PRICE" value={p.price} onChange={v=>setP({...p,price:v})} placeholder="e.g. ₦35,000"/><Field label="LOCATION" value={p.location} onChange={v=>setP({...p,location:v})} placeholder="e.g. Kaduna"/><Button full onClick={()=>{setProfile(p);done()}}>Save profile</Button></Page>}
+function Page({children}){return <div style={{padding:"20px 18px 40px",display:"flex",flexDirection:"column",gap:14}}>{children}</div>}
+function Intro({title,text}){return <div style={{marginBottom:4}}><div style={{fontSize:23,fontWeight:850}}>{title}</div><div style={{fontSize:13,color:C.muted,lineHeight:1.5,marginTop:5}}>{text}</div></div>}
+function Tone({tone,setTone}){return <div style={{display:"flex",gap:7,overflowX:"auto",paddingBottom:3}}>{["Friendly","Professional","Short","Persuasive"].map(t=><button key={t} onClick={()=>setTone(t)} style={{whiteSpace:"nowrap",padding:"9px 12px",borderRadius:20,border:`1px solid ${tone===t?C.blue:C.line}`,background:tone===t?"rgba(79,140,255,.18)":"rgba(255,255,255,.035)",color:tone===t?"#cfe0ff":C.muted,fontWeight:700,fontSize:12}}>{t}</button>)}</div>}
+function TextTool({profile,mode}){const[tone,setTone]=useState("Friendly"),[result,setResult]=useState(""),[error,setError]=useState(""),[loading,setLoading]=useState(false);const run=async()=>{if(!profile.business)return;setLoading(true);setError("");try{setResult(await generate({businessName:profile.business,product:profile.product,price:profile.price,location:profile.location,task:mode,tone}))}catch(e){setError(e.message)}finally{setLoading(false)}};return <Page><Intro title={mode==="ad"?"Create an advertisement":"WhatsApp marketing"} text="Choose a tone and let BizAI write a polished message for your business."/>{!profile.business?<ErrorBox text="Set up your business profile first."/>:<><Tone tone={tone} setTone={setTone}/><Button full onClick={run} disabled={loading}>{loading?"Generating...":mode==="ad"?"Generate advertisement":"Generate WhatsApp message"}</Button>{loading&&<Loading/>}{error&&<ErrorBox text={error}/>} {result&&<Result text={result}/>}</>}</Page>}
+function Result({text}){return <><Card style={{padding:17,whiteSpace:"pre-wrap",lineHeight:1.6,fontSize:14}}>{text}</Card><Button secondary onClick={()=>navigator.clipboard?.writeText(text)}>Copy result</Button></>}
+function ErrorBox({text}){return <div style={{padding:13,borderRadius:14,background:"rgba(255,111,125,.1)",border:"1px solid rgba(255,111,125,.3)",color:"#ffb2ba",fontSize:13}}>{text}</div>}
+function Reply({profile}){const[message,setMessage]=useState(""),[tone,setTone]=useState("Friendly"),[result,setResult]=useState(""),[error,setError]=useState(""),[loading,setLoading]=useState(false);const run=async()=>{if(!message.trim())return;setLoading(true);setError("");try{setResult(await generate({businessName:profile.business,product:profile.product,price:profile.price,location:profile.location,task:"reply",customerMessage:message,tone}))}catch(e){setError(e.message)}finally{setLoading(false)}};return <Page><Intro title="Smart customer reply" text="Paste the customer's message and BizAI will help you answer clearly."/><textarea value={message} onChange={e=>setMessage(e.target.value)} rows={5} placeholder="Paste the customer's message..." style={{...baseInput,resize:"vertical"}}/><Tone tone={tone} setTone={setTone}/><Button full onClick={run} disabled={loading||!message.trim()}>{loading?"Thinking...":"Generate reply"}</Button>{error&&<ErrorBox text={error}/>} {result&&<Result text={result}/>}</Page>}
+function Flyer({profile}){const ref=useRef(null),[image,setImage]=useState(null);useEffect(()=>{const canvas=ref.current;if(!canvas)return;const ctx=canvas.getContext("2d");canvas.width=400;canvas.height=500;const finish=()=>{const g=ctx.createLinearGradient(0,370,400,500);g.addColorStop(0,"#10264d");g.addColorStop(1,"#061126");ctx.fillStyle=g;ctx.fillRect(0,370,400,130);ctx.fillStyle="#51d7ff";ctx.fillRect(0,370,400,4);ctx.fillStyle="#fff";ctx.font="700 22px sans-serif";ctx.fillText(profile.business||"Your Business",18,410);ctx.font="15px sans-serif";ctx.fillStyle="#b7c7e6";ctx.fillText(profile.product||"Your product",18,438);ctx.fillStyle="#51d7ff";ctx.font="700 20px sans-serif";ctx.fillText(profile.price||"",18,468);ctx.font="13px sans-serif";ctx.fillStyle="#fff";ctx.fillText(profile.location||"",18,490)};ctx.fillStyle="#0c1b38";ctx.fillRect(0,0,400,370);if(!image){ctx.fillStyle="#91a4c7";ctx.font="15px sans-serif";ctx.fillText("Upload a product photo",120,185);finish();return}const img=new Image();img.onload=()=>{const s=Math.max(400/img.width,370/img.height),w=img.width*s,h=img.height*s;ctx.drawImage(img,(400-w)/2,(370-h)/2,w,h);finish()};img.src=image},[image,profile]);const pick=e=>{const f=e.target.files?.[0];if(!f)return;const r=new FileReader();r.onload=()=>setImage(r.result);r.readAsDataURL(f)};const dl=()=>{const a=document.createElement("a");a.download=`${(profile.business||"bizai-flyer").replace(/\s+/g,"_")}.png`;a.href=ref.current.toDataURL("image/png");a.click()};return <Page><Intro title="Flyer Studio" text="Upload a product photo and BizAI will package your business details into a clean flyer."/><input type="file" accept="image/*" onChange={pick} style={{color:C.muted}}/><canvas ref={ref} style={{width:"100%",borderRadius:20,border:`1px solid ${C.line}`}}/><Button full onClick={dl}>Download flyer</Button></Page>}
+function Website({profile}){const[form,setForm]=useState({description:"",businessName:profile.business||"",businessType:"",services:profile.product||"",location:profile.location||"",contact:"",style:"",colors:"",requirements:""}),[html,setHtml]=useState(""),[error,setError]=useState(""),[loading,setLoading]=useState(false);const f=(k,l,p)=><Field label={l} value={form[k]} onChange={v=>setForm({...form,[k]:v})} placeholder={p}/>;const run=async()=>{if(!form.description.trim()&&!form.businessName.trim()){setError("Add a business name or description first.");return}setLoading(true);setError("");try{setHtml(await generateWebsite(form))}catch(e){setError(e.message)}finally{setLoading(false)}};const dl=()=>{const u=URL.createObjectURL(new Blob([html],{type:"text/html"})),a=document.createElement("a");a.href=u;a.download=`${(form.businessName||"website").replace(/\s+/g,"_")}.html`;a.click();setTimeout(()=>URL.revokeObjectURL(u),1000)};return <Page><Intro title="Website AI" text="Describe the business. BizAI will generate a complete website you can preview and export."/><textarea value={form.description} onChange={e=>setForm({...form,description:e.target.value})} rows={4} placeholder="Describe the website you want..." style={{...baseInput,resize:"vertical"}}/>{f("businessName","BUSINESS NAME","e.g. King's Cut")}{f("businessType","BUSINESS TYPE","e.g. Barber shop")}{f("services","SERVICES / PRODUCTS","What do you offer?")}{f("location","LOCATION","e.g. Kaduna")}{f("contact","CONTACT","WhatsApp or phone")}{f("style","STYLE","Modern, bold, minimal")}{f("colors","COLORS","Blue, black...")}{f("requirements","OTHER REQUIREMENTS","Booking button, gallery...")}<Button full onClick={run} disabled={loading}>{loading?"Building your website...":"Generate website"}</Button>{error&&<ErrorBox text={error}/>} {html&&<><div style={{fontWeight:800}}>Live preview</div><iframe title="Website preview" srcDoc={html} sandbox="allow-scripts" style={{width:"100%",height:430,border:0,borderRadius:20,background:"white"}}/><div style={{display:"flex",gap:8}}><Button onClick={dl}>Download HTML</Button><Button secondary onClick={()=>navigator.clipboard?.writeText(html)}>Copy code</Button></div></>}</Page>}
+function Bizora(){const[messages,setMessages]=useState(()=>{try{return JSON.parse(localStorage.getItem(CHAT_KEY)||"[]")}catch{return[]}}),[input,setInput]=useState(""),[loading,setLoading]=useState(false),[error,setError]=useState("");const scroll=useRef(null);useEffect(()=>{try{localStorage.setItem(CHAT_KEY,JSON.stringify(messages))}catch{}if(scroll.current)scroll.current.scrollTop=scroll.current.scrollHeight},[messages]);const send=async()=>{const text=input.trim();if(!text||loading)return;const next=[...messages,{role:"user",content:text}];setMessages(next);setInput("");setLoading(true);setError("");try{const r=await chat(next);setMessages([...next,{role:"assistant",content:r}])}catch(e){setError(e.message)}finally{setLoading(false)}};return <div style={{height:"calc(100vh - 69px)",display:"flex",flexDirection:"column"}}><div style={{padding:"14px 18px 8px",display:"flex",justifyContent:"space-between",alignItems:"center"}}><div><div style={{color:C.cyan,fontSize:11,fontWeight:800}}>BIZORA AI</div><div style={{fontSize:12,color:C.muted}}>Always ready to help</div></div><Button secondary onClick={()=>{setMessages([]);localStorage.removeItem(CHAT_KEY)}}>New chat</Button></div><div ref={scroll} style={{flex:1,overflowY:"auto",padding:"10px 18px 20px",display:"flex",flexDirection:"column",gap:12}}>{messages.length===0&&<div style={{textAlign:"center",padding:"50px 15px 20px"}}><div style={{width:76,height:76,borderRadius:"50%",margin:"0 auto",display:"grid",placeItems:"center",fontSize:34,background:"radial-gradient(circle at 35% 30%,#71e8ff,#4865ff 45%,#171d55 72%)",boxShadow:"0 0 55px rgba(79,140,255,.5)"}}>✧</div><div style={{fontSize:23,fontWeight:850,marginTop:20}}>How can I help?</div><div style={{color:C.muted,fontSize:13,lineHeight:1.5,marginTop:7}}>Ask about your business, ideas, writing, coding, planning, or anything else.</div></div>}{messages.map((m,i)=><div key={i} style={{maxWidth:"86%",alignSelf:m.role==="user"?"flex-end":"flex-start",padding:"12px 14px",borderRadius:m.role==="user"?"18px 18px 5px 18px":"18px 18px 18px 5px",background:m.role==="user"?"linear-gradient(135deg,#3f7cff,#665ee8)":"rgba(255,255,255,.06)",border:m.role==="user"?"none":`1px solid ${C.line}`,whiteSpace:"pre-wrap",lineHeight:1.5,fontSize:14}}>{m.content}</div>)}{loading&&<Loading/>}{error&&<ErrorBox text={error}/>}</div><div style={{padding:"10px 14px 16px",borderTop:`1px solid ${C.line}`,background:"rgba(6,17,38,.94)"}}><div style={{display:"flex",gap:8,alignItems:"end",padding:6,borderRadius:19,background:"rgba(255,255,255,.055)",border:`1px solid ${C.line}`}}><textarea value={input} onChange={e=>setInput(e.target.value)} onKeyDown={e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();send()}}} rows={2} placeholder="Ask Bizora anything..." style={{flex:1,resize:"none",border:0,outline:0,background:"transparent",color:C.text,padding:8,fontSize:14}}/><button onClick={send} disabled={loading||!input.trim()} style={{width:43,height:43,borderRadius:14,border:0,background:"linear-gradient(135deg,#4f8cff,#675fff)",color:"white",fontSize:19}}>↑</button></div></div></div>}
+export default function App(){const[screen,setScreen]=useState("home"),[profile,setProfile]=useState(()=>{try{return JSON.parse(localStorage.getItem("bizai_profile"))||{business:"",product:"",price:"",location:""}}catch{return{business:"",product:"",price:"",location:""}});useEffect(()=>{try{localStorage.setItem("bizai_profile",JSON.stringify(profile))}catch{}},[profile]);const titles={profile:"Business profile",ad:"Create Ad",whatsapp:"WhatsApp Marketing",flyer:"Flyer Studio",reply:"Smart Reply",website:"Website AI",ai:"Bizora AI"};return <div style={{minHeight:"100vh",background:"radial-gradient(circle at 50% -10%,#173b75 0,#07152d 30%,#040c1d 72%)",color:C.text,fontFamily:"Inter,'Work Sans',system-ui,sans-serif",display:"flex",justifyContent:"center"}}><div style={{width:"100%",maxWidth:430,minHeight:"100vh",background:"linear-gradient(180deg,rgba(8,23,50,.72),rgba(4,12,29,.94))",boxShadow:"0 0 80px rgba(0,0,0,.35)"}}>{screen!=="home"&&<Header title={titles[screen]} onBack={()=>setScreen("home")}/>} {screen==="home"&&<Home profile={profile} onProfile={()=>setScreen("profile")} onTool={setScreen}/>} {screen==="profile"&&<Profile profile={profile} setProfile={setProfile} done={()=>setScreen("home")}/>} {screen==="ad"&&<TextTool profile={profile} mode="ad"/>}{screen==="whatsapp"&&<TextTool profile={profile} mode="whatsapp"/>}{screen==="reply"&&<Reply profile={profile}/>} {screen==="flyer"&&<Flyer profile={profile}/>} {screen==="website"&&<Website profile={profile}/>} {screen==="ai"&&<Bizora/>}</div></div>}
