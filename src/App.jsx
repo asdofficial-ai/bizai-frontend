@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import WebsiteAI from "./WebsiteAI.jsx";
+import WebsiteAI from "./WebsiteAIv2.jsx";
 
 const API_BASE=(import.meta.env.VITE_API_URL||"").replace(/\/$/,"");
 const CHAT_KEY="bizai_chat_history";
