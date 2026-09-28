@@ -2,6 +2,35 @@ import React, { useEffect, useState } from "react";
 import ReactDOM from "react-dom/client";
 import App from "./AppFixed.jsx";
 import WebsiteAI from "./WebsiteAI.jsx";
+import { emitLearningSignal } from "./learningSignals.js";
+
+// Observe only Bizora chat request outcomes. Never inspect or forward request bodies,
+// prompts, messages, transcripts, or response content into learning telemetry.
+const nativeFetch=window.fetch.bind(window);
+window.fetch=async(input,init)=>{
+  const url=typeof input==="string"?input:input?.url||"";
+  const isBizoraChat=url.includes("/api/chat");
+  if(!isBizoraChat)return nativeFetch(input,init);
+  const started=performance.now();
+  try{
+    const response=await nativeFetch(input,init);
+    void emitLearningSignal({
+      type:response.ok?"success":"command_failure",
+      latencyMs:performance.now()-started,
+      component:"bizora-chat",
+      version:"web-v1"
+    });
+    return response;
+  }catch(error){
+    void emitLearningSignal({
+      type:"command_failure",
+      latencyMs:performance.now()-started,
+      component:"bizora-chat",
+      version:"web-v1"
+    });
+    throw error;
+  }
+};
 
 function DevelopmentApp(){
   const [websiteOpen,setWebsiteOpen]=useState(false);
