@@ -8,6 +8,7 @@ function DevelopmentApp(){
   const [profile,setProfile]=useState(()=>{try{return JSON.parse(localStorage.getItem("bizai_profile")||"null")||{}}catch{return{}}});
 
   useEffect(()=>{
+    if(websiteOpen)return;
     const openWebsite=(event)=>{
       const button=event.target.closest?.("button");
       if(!button)return;
@@ -21,7 +22,7 @@ function DevelopmentApp(){
     };
     document.addEventListener("click",openWebsite,true);
     return()=>document.removeEventListener("click",openWebsite,true);
-  },[]);
+  },[websiteOpen]);
 
   if(!websiteOpen)return <App/>;
   return <div style={{minHeight:"100vh",display:"flex",justifyContent:"center",background:"radial-gradient(circle at 50% -10%,#173b75,#07152d 30%,#040c1d 72%)",color:"#f7f9ff",fontFamily:"Inter,system-ui,sans-serif"}}>
