@@ -9,7 +9,8 @@ describe("Bizora correction intelligence",()=>{
     "You misunderstood me",
     "You misheard what I said",
     "You got it wrong",
-    "I didn't say living room",
+    "No, I didn't say living room",
+    "Actually, I did not say turn on the fan",
     "Wrong room",
     "Actually, I meant the bedroom not the kitchen"
   ])("detects high-confidence correction: %s",text=>{
@@ -32,7 +33,10 @@ describe("Bizora correction intelligence",()=>{
     "Wrong answers can happen in exams",
     "My brother said turn off the light",
     "She misunderstood the assignment",
-    "I didn't say anything yesterday because I was tired"
+    "I didn't say anything yesterday because I was tired",
+    "I didn't say much at the meeting",
+    "I did not say a word during class",
+    "I didn't say living room when I told my brother the story"
   ])("rejects ordinary or ambiguous conversation: %s",text=>{
     expect(classifyCorrection(text,{hasAssistantReply:true})).toBe(null);
   });
