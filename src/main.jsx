@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import ReactDOM from "react-dom/client";
 import App from "./AppFixed.jsx";
-import WebsiteAI from "./WebsiteAI.jsx";
+import WebsiteAI from "./WebsiteAIv2.jsx";
 
 function DevelopmentApp(){
   const [websiteOpen,setWebsiteOpen]=useState(false);
