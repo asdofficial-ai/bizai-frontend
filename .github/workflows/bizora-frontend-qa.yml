@@ -12,7 +12,7 @@ permissions:
   contents: read
 
 jobs:
-  build:
+  qa:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -24,5 +24,7 @@ jobs:
           node-version: '20'
       - name: Install dependencies
         run: npm install
+      - name: Run unit tests
+        run: npm test
       - name: Build frontend
         run: npm run build
