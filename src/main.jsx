@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import ReactDOM from "react-dom/client";
 import App from "./AppFixed.jsx";
 import WebsiteAI from "./WebsiteAIv2.jsx";
-import VideoAdStudioV2 from "./VideoAdStudioV2.jsx";
+import VeoVideoStudio from "./VeoVideoStudio.jsx";
 
 function Shell({title,onBack,children}){
   return <div style={{minHeight:"100vh",display:"flex",justifyContent:"center",background:"radial-gradient(circle at 50% -10%,#173b75,#07152d 30%,#040c1d 72%)",color:"#f7f9ff",fontFamily:"Inter,system-ui,sans-serif"}}>
@@ -37,7 +37,6 @@ function DevelopmentApp(){
       if(text.includes("video ad studio")||text==="create"){
         event.preventDefault();
         event.stopPropagation();
-        try{setProfile(JSON.parse(localStorage.getItem("bizai_profile")||"null")||{})}catch{setProfile({})}
         setVideoOpen(true);
       }
     };
@@ -45,7 +44,7 @@ function DevelopmentApp(){
     return()=>document.removeEventListener("click",openTool,true);
   },[websiteOpen,videoOpen]);
 
-  if(videoOpen)return <Shell title="Video Ad Studio" onBack={()=>setVideoOpen(false)}><VideoAdStudioV2 profile={profile}/></Shell>;
+  if(videoOpen)return <Shell title="Video Ad Studio" onBack={()=>setVideoOpen(false)}><VeoVideoStudio/></Shell>;
   if(websiteOpen)return <Shell title="Website AI" onBack={()=>setWebsiteOpen(false)}><WebsiteAI profile={profile}/></Shell>;
   return <App/>;
 }
