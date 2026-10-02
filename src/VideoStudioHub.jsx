@@ -1,5 +1,5 @@
 import React,{useState}from"react";
-import VideoAdStudioV2 from"./VideoAdStudioV2.jsx";
+import FreeMotionStudio from"./FreeMotionStudio.jsx";
 import VeoVideoStudio from"./VeoVideoStudio.jsx";
 
 const C={text:"#f7f9ff",muted:"#91a5ca",cyan:"#50d9ff",line:"rgba(115,157,255,.22)"};
@@ -12,8 +12,8 @@ export default function VideoStudioHub({profile={}}){
     <button type="button" onClick={()=>setMode("free")} style={{padding:"11px 8px",borderRadius:11,border:"1px solid transparent",background:mode==="free"?"linear-gradient(135deg,#7f39ef,#1ca4df)":"transparent",color:C.text,fontWeight:900,fontSize:12,boxShadow:mode==="free"?"0 0 14px rgba(66,168,255,.25)":"none"}}>🎬 Free Motion</button>
     <button type="button" onClick={()=>setMode("ai")} style={{padding:"11px 8px",borderRadius:11,border:"1px solid transparent",background:mode==="ai"?"linear-gradient(135deg,#7f39ef,#1ca4df)":"transparent",color:C.text,fontWeight:900,fontSize:12,boxShadow:mode==="ai"?"0 0 14px rgba(66,168,255,.25)":"none"}}>✨ AI Veo</button>
    </div>
-   <div style={{fontSize:10,color:C.muted,textAlign:"center",padding:"7px 4px 2px",lineHeight:1.45}}>{mode==="free"?"Works now · animates your own photos and clips with cinematic motion":"Real generated video · requires Google Veo API billing and backend setup"}</div>
+   <div style={{fontSize:10,color:C.muted,textAlign:"center",padding:"7px 4px 2px",lineHeight:1.45}}>{mode==="free"?"Works now · motion presets, transitions, pacing and text controls":"Real generated video · requires Google Veo API billing and backend setup"}</div>
   </div>
-  {mode==="free"?<VideoAdStudioV2 profile={profile}/>:<VeoVideoStudio/>}
+  {mode==="free"?<FreeMotionStudio profile={profile}/>:<VeoVideoStudio/>}
  </div>;
 }
